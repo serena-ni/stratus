@@ -22,39 +22,44 @@ html, body {
   padding: 0;
   overflow: hidden;
   background: #04050a;
-  font-family: "Sora", "Space Grotesk", "Trebuchet MS", sans-serif;
+  font-family: "Sora", sans-serif;
 }
 
 canvas {
   display: block;
   position: fixed;
   inset: 0;
+  z-index: 0;
 }
 
 .clock {
   position: fixed;
   top: 20px;
   left: 20px;
-  padding: 8px 12px;
-  min-width: 72px;
+  padding: 12px 20px;
+  min-width: 100px;
   justify-content: center;
   display: inline-flex;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(6, 10, 24, 0.65), rgba(30, 50, 90, 0.4));
-  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: rgba(8, 12, 24, 0.6);
+  border: 0;
   color: var(--ink);
-  letter-spacing: 0.08em;
-  font-size: 13px;
-  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(14px);
-  transition: transform 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-soft);
+  line-height: 1.6;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s var(--ease-smooth);
+  z-index: 10;
 }
 
 .clock:hover {
   transform: translateY(-1px);
-  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  background: rgba(12, 18, 36, 0.7);
 }
 
 .ui {
@@ -65,58 +70,123 @@ canvas {
   flex-direction: column;
   align-items: flex-end;
   gap: 12px;
-  z-index: 2;
+  z-index: 10;
 }
 
 .menu-toggle {
-  background: linear-gradient(135deg, rgba(14, 22, 48, 0.85), rgba(6, 8, 16, 0.9));
+  background: rgba(8, 12, 24, 0.6);
   color: var(--ink);
-  border: 1px solid var(--panel-border);
-  border-radius: 999px;
-  padding: 10px 18px;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 24px;
   font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+  font-weight: 500;
+  font-family: inherit;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38), 0 0 30px var(--panel-glow);
-  transition: transform 0.3s var(--ease-smooth), box-shadow 0.3s var(--ease-soft),
-    background 0.3s var(--ease-soft);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.menu-toggle::before,
+.menu-toggle::after {
+  content: "";
+  position: absolute;
+  background: linear-gradient(90deg, transparent, rgba(159, 217, 255, 0.6), transparent);
+  transition: all 0.5s var(--ease-smooth);
+}
+
+.menu-toggle::before {
+  width: 100%;
+  height: 2px;
+  top: 0;
+  left: -100%;
+}
+
+.menu-toggle::after {
+  width: 100%;
+  height: 2px;
+  bottom: 0;
+  right: -100%;
+}
+
+.menu-toggle:hover::before {
+  left: 100%;
+}
+
+.menu-toggle:hover::after {
+  right: 100%;
 }
 
 .menu-toggle:hover {
-  transform: translateY(-1.5px) scale(1.01);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.42), 0 0 36px rgba(159, 217, 255, 0.3);
+  background: rgba(12, 18, 36, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }
 
 .menu-toggle:active {
-  transform: translateY(0) scale(0.98);
+  transform: translateY(0);
 }
 
 .menu-toggle:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(159, 217, 255, 0.4), 0 0 0 6px rgba(7, 12, 22, 0.8);
+  box-shadow: 0 0 0 2px rgba(159, 217, 255, 0.5);
 }
 
 .menu {
   width: min(320px, calc(100vw - 40px));
-  background: radial-gradient(circle at top left, rgba(140, 200, 255, 0.22), transparent 62%),
-    linear-gradient(160deg, rgba(8, 12, 26, 0.92), rgba(2, 3, 8, 0.88));
-  border: 1px solid var(--panel-border);
-  border-radius: 18px;
-  padding: 18px 18px 16px;
+  background: radial-gradient(circle at top left, rgba(140, 200, 255, 0.18), transparent 60%),
+    rgba(6, 10, 20, 0.85);
+  border: 0;
+  border-radius: 12px;
+  padding: 20px;
   color: var(--ink);
-  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(18px);
-  transform: translateY(-8px) scale(0.98);
+  transform: translateY(-12px) scale(0.96);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s var(--ease-soft), transform 0.3s var(--ease-smooth);
+  transition: all 0.35s var(--ease-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.menu::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(159, 217, 255, 0.08) 50%, 
+    transparent 70%);
+  background-size: 200% 200%;
+  border-radius: 12px;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-soft);
 }
 
 .menu.open {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: auto;
+}
+
+.menu.open::before {
+  animation: border-glow 10s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes border-glow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .menu-row {
@@ -135,9 +205,10 @@ canvas {
 
 .menu-row label {
   color: var(--muted);
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  letter-spacing: 0.05em;
 }
 
 .menu-row .segmented,
@@ -150,9 +221,9 @@ canvas {
   padding: 4px;
   gap: 6px;
   border-radius: 999px;
-  background: rgba(6, 9, 18, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  background: rgba(8, 12, 24, 0.6);
+  border: 0;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .segment {
@@ -162,22 +233,42 @@ canvas {
   border-radius: 999px;
   padding: 6px 12px;
   font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 500;
+  font-family: inherit;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: color 0.25s var(--ease-soft), background 0.25s var(--ease-soft),
-    transform 0.25s var(--ease-smooth), box-shadow 0.25s var(--ease-soft);
+  position: relative;
+  transition: all 0.3s var(--ease-smooth);
+}
+
+.segment::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transform: translateX(-50%);
+  transition: width 0.3s var(--ease-smooth);
 }
 
 .segment:hover {
   color: var(--ink);
-  transform: translateY(-1px);
+}
+
+.segment:hover::after {
+  width: 80%;
 }
 
 .segment[aria-pressed="true"] {
   color: var(--ink);
-  background: linear-gradient(140deg, rgba(30, 60, 120, 0.6), rgba(12, 18, 36, 0.8));
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(159, 217, 255, 0.25);
+  background: linear-gradient(140deg, rgba(30, 60, 120, 0.5), rgba(12, 18, 36, 0.7));
+}
+
+.segment[aria-pressed="true"]::after {
+  width: 90%;
+  background: var(--accent);
 }
 
 .segment:focus-visible {
@@ -186,28 +277,114 @@ canvas {
 }
 
 .menu-row input[type="range"] {
-  accent-color: var(--accent);
   width: 100%;
-  transition: filter 0.25s var(--ease-soft), transform 0.25s var(--ease-smooth);
+  height: 6px;
+  background: rgba(20, 30, 60, 0.4);
+  border-radius: 999px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: all 0.3s var(--ease-smooth);
+  cursor: pointer;
+  position: relative;
 }
 
-.menu-row input[type="range"]:hover {
-  filter: brightness(1.05);
+.menu-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(159, 217, 255, 0.9), rgba(120, 180, 255, 0.8));
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(159, 217, 255, 0.2);
+  transition: all 0.25s var(--ease-smooth);
+}
+
+.menu-row input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(159, 217, 255, 0.9), rgba(120, 180, 255, 0.8));
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(159, 217, 255, 0.2);
+  transition: all 0.25s var(--ease-smooth);
+}
+
+.menu-row input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4), 0 0 0 3px rgba(159, 217, 255, 0.35);
+}
+
+.menu-row input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4), 0 0 0 3px rgba(159, 217, 255, 0.35);
+}
+
+.menu-row input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.05);
+}
+
+.menu-row input[type="range"]:active::-moz-range-thumb {
+  transform: scale(1.05);
 }
 
 .menu-row input[type="range"]:disabled {
   opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.menu-row input[type="range"]:disabled::-webkit-slider-thumb {
+  cursor: not-allowed;
+}
+
+.menu-row input[type="range"]:disabled::-moz-range-thumb {
+  cursor: not-allowed;
 }
 
 .menu-row.toggle input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--accent-2);
-  transition: transform 0.2s var(--ease-smooth);
+  width: 42px;
+  height: 22px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(20, 30, 60, 0.5);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-smooth);
+  outline: none;
 }
 
-.menu-row.toggle input[type="checkbox"]:active {
-  transform: scale(0.92);
+.menu-row.toggle input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  background: linear-gradient(135deg, rgba(180, 190, 220, 0.9), rgba(150, 160, 200, 0.8));
+  transition: all 0.3s var(--ease-smooth);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.menu-row.toggle input[type="checkbox"]:checked {
+  background: linear-gradient(135deg, rgba(159, 217, 255, 0.4), rgba(120, 180, 255, 0.35));
+}
+
+.menu-row.toggle input[type="checkbox"]:checked::before {
+  left: 22px;
+  background: linear-gradient(135deg, rgba(159, 217, 255, 0.95), rgba(120, 180, 255, 0.85));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(159, 217, 255, 0.3);
+}
+
+.menu-row.toggle input[type="checkbox"]:hover::before {
+  transform: scale(1.1);
+}
+
+.menu-row.toggle input[type="checkbox"]:active::before {
+  transform: scale(0.95);
 }
 
 .control {
@@ -222,7 +399,10 @@ canvas {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-size: 12px;
-  color: rgba(230, 236, 255, 0.62);
+  font-weight: 500;
+  font-family: inherit;
+  color: rgba(230, 236, 255, 0.7);
+  transition: color 0.3s var(--ease-soft);
 }
 
 @media (max-width: 680px) {

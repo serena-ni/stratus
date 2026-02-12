@@ -26,6 +26,12 @@ let lastFrame = performance.now();
 let simTime = 0;
 let lastMeteorSpawn = performance.now();
 const meteors = [];
+const clouds = [];
+const planets = [
+  { name: "Venus", color: "#fff4e6", size: 1.4, rise: 5.5 / 24, set: 19 / 24, brightness: 0.5 },
+  { name: "Jupiter", color: "#f4e4c1", size: 1.6, rise: 20 / 24, set: 6 / 24, brightness: 0.45 },
+  { name: "Mars", color: "#ffb4a0", size: 1.2, rise: 22 / 24, set: 8 / 24, brightness: 0.4 }
+];
 
 const meteorTiers = [
   { name: "common", chance: 0.7, speed: [800, 1100], size: [1.2, 1.8], life: [0.7, 1.1], glow: 0.4 },
@@ -49,6 +55,7 @@ function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   seedStars();
+  seedClouds();
 }
 
 window.addEventListener("resize", resize);
@@ -61,6 +68,28 @@ function seedStars() {
     size: Math.random() * 1.4 + 0.2,
     twinkle: Math.random() * Math.PI * 2
   }));
+}
+
+function seedClouds() {
+  clouds.length = 0;
+  const layers = [
+    { count: 4, speed: 8, yRange: [0.05, 0.25], scale: [0.8, 1.2], alpha: 0.04 },
+    { count: 3, speed: 5, yRange: [0.2, 0.45], scale: [1.0, 1.5], alpha: 0.035 },
+    { count: 3, speed: 3, yRange: [0.4, 0.65], scale: [1.2, 1.8], alpha: 0.025 }
+  ];
+  
+  layers.forEach((layer) => {
+    for (let i = 0; i < layer.count; i += 1) {
+      clouds.push({
+        x: Math.random() * canvas.width * 1.5 - canvas.width * 0.25,
+        y: canvas.height * randRange(layer.yRange[0], layer.yRange[1]),
+        scale: randRange(layer.scale[0], layer.scale[1]),
+        speed: layer.speed,
+        alpha: layer.alpha,
+        offset: Math.random() * Math.PI * 2
+      });
+    }
+  });
 }
 
 function pad2(value) {
@@ -154,6 +183,190 @@ function drawStars(nightFactor) {
     ctx.fill();
   }
   ctx.globalAlpha = 1;
+}
+
+function getMoonPhase() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const day = now.getDate();
+  const knownNewMoon = new Date(2000, 0, 6, 18, 14);
+  const diff = now - knownNewMoon;
+  const daysSince = diff / (1000 * 60 * 60 * 24);
+  const lunarCycle = 29.53058867;
+  const phase = (daysSince % lunarCycle) / lunarCycle;
+  return phase;
+}
+
+function drawMoon(progress) {
+  const nightFactor = getNightFactor(progress);
+  if (nightFactor < 0.15) return;
+  
+  const moonRise = 0.75;
+  const moonSet = 0.35;
+  let moonVisible = false;
+  let moonProgress = 0;
+  
+  if (progress >= moonRise || progress <= moonSet) {
+    moonVisible = true;
+    if (progress >= moonRise) {
+      moonProgress = (progress - moonRise) / (1 - moonRise + moonSet);
+    } else {
+      moonProgress = (progress + (1 - moonRise)) / (1 - moonRise + moonSet);
+    }
+  }
+  
+  if (!moonVisible) return;
+  
+  const arc = Math.PI;
+  const angle = moonProgress * arc - arc / 2;
+  const moonX = canvas.width * 0.5 + Math.cos(angle) * canvas.width * 0.4;
+  const moonY = canvas.height * 0.3 - Math.sin(angle) * canvas.height * 0.25;
+  const moonSize = 28;
+  
+  const phase = getMoonPhase();
+  const alpha = Math.min(1, nightFactor * 1.2);
+  
+  ctx.save();
+  ctx.globalAlpha = alpha * 0.15;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, moonSize + 12, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.globalAlpha = alpha * 0.7;
+  ctx.fillStyle = "#f9f6e8";
+  ctx.beginPath();
+  ctx.arc(moonX, moonY, moonSize, 0, Math.PI * 2);
+  ctx.fill();
+  
+  if (phase > 0.03 && phase < 0.97) {
+    ctx.fillStyle = "rgba(10, 15, 43, 0.4)";
+    ctx.beginPath();
+    const shadowPhase = (phase - 0.5) * 2;
+    if (phase < 0.5) {
+      ctx.arc(moonX, moonY, moonSize, -Math.PI / 2, Math.PI / 2, false);
+      ctx.ellipse(moonX, moonY, Math.abs(shadowPhase) * moonSize, moonSize, 0, Math.PI / 2, -Math.PI / 2, phase < 0.5);
+    } else {
+      ctx.arc(moonX, moonY, moonSize, Math.PI / 2, -Math.PI / 2, false);
+      ctx.ellipse(moonX, moonY, Math.abs(shadowPhase) * moonSize, moonSize, 0, -Math.PI / 2, Math.PI / 2, phase > 0.5);
+    }
+    ctx.fill();
+  }
+  
+  ctx.restore();
+}
+
+function drawSunGlow(progress) {
+  const dayFactor = 1 - getNightFactor(progress);
+  if (dayFactor < 0.1) return;
+  
+  const sunRise = 6.5 / 24;
+  const sunSet = 18.5 / 24;
+  
+  if (progress < sunRise || progress > sunSet) return;
+  
+  const sunProgress = (progress - sunRise) / (sunSet - sunRise);
+  const arc = Math.PI;
+  const angle = sunProgress * arc;
+  const sunX = canvas.width * 0.2 + Math.cos(Math.PI - angle) * canvas.width * 0.6;
+  const sunY = canvas.height * 0.85 - Math.sin(Math.PI - angle) * canvas.height * 0.55;
+  
+  const isDawn = progress < 8 / 24;
+  const isDusk = progress > 17 / 24;
+  
+  if (isDawn || isDusk) {
+    const intensity = isDawn ? (progress - sunRise) / (8 / 24 - sunRise) : 1 - (progress - 17 / 24) / (sunSet - 17 / 24);
+    const grad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 350);
+    grad.addColorStop(0, `rgba(255, 200, 120, ${intensity * 0.08})`);
+    grad.addColorStop(0.3, `rgba(255, 160, 100, ${intensity * 0.04})`);
+    grad.addColorStop(1, "rgba(255, 140, 80, 0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+function drawPlanets(progress) {
+  const nightFactor = getNightFactor(progress);
+  if (nightFactor < 0.3) return;
+  
+  planets.forEach((planet) => {
+    let visible = false;
+    let planetProgress = 0;
+    
+    if (planet.set < planet.rise) {
+      visible = progress >= planet.rise || progress <= planet.set;
+      if (progress >= planet.rise) {
+        planetProgress = (progress - planet.rise) / (1 - planet.rise + planet.set);
+      } else {
+        planetProgress = (progress + (1 - planet.rise)) / (1 - planet.rise + planet.set);
+      }
+    } else {
+      visible = progress >= planet.rise && progress <= planet.set;
+      planetProgress = (progress - planet.rise) / (planet.set - planet.rise);
+    }
+    
+    if (!visible) return;
+    
+    const arc = Math.PI * 0.6;
+    const angle = planetProgress * arc + Math.PI * 0.2;
+    const x = canvas.width * 0.5 + Math.cos(Math.PI - angle) * canvas.width * 0.45;
+    const y = canvas.height * 0.25 - Math.sin(Math.PI - angle) * canvas.height * 0.15;
+    
+    ctx.save();
+    ctx.globalAlpha = nightFactor * planet.brightness * 0.6;
+    
+    const glowGrad = ctx.createRadialGradient(x, y, 0, x, y, planet.size * 2.5);
+    glowGrad.addColorStop(0, planet.color);
+    glowGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(x, y, planet.size * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = planet.color;
+    ctx.beginPath();
+    ctx.arc(x, y, planet.size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+  });
+}
+
+function updateClouds(deltaSeconds) {
+  clouds.forEach((cloud) => {
+    cloud.x += cloud.speed * deltaSeconds;
+    if (cloud.x > canvas.width + 200) {
+      cloud.x = -200;
+    }
+  });
+}
+
+function drawClouds(progress) {
+  const dayFactor = 1 - getNightFactor(progress);
+  const baseAlpha = 0.15 + dayFactor * 0.25;
+  
+  clouds.forEach((cloud) => {
+    ctx.save();
+    ctx.globalAlpha = cloud.alpha * baseAlpha;
+    ctx.fillStyle = "#ffffff";
+    
+    const offsetX = Math.sin(cloud.offset) * 20;
+    const x = cloud.x + offsetX;
+    const y = cloud.y;
+    const scale = cloud.scale;
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 40 * scale, 0, Math.PI * 2);
+    ctx.arc(x + 35 * scale, y - 10 * scale, 50 * scale, 0, Math.PI * 2);
+    ctx.arc(x + 70 * scale, y, 40 * scale, 0, Math.PI * 2);
+    ctx.arc(x + 90 * scale, y + 10 * scale, 35 * scale, 0, Math.PI * 2);
+    ctx.arc(x + 50 * scale, y + 15 * scale, 45 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+    cloud.offset += 0.002;
+  });
 }
 
 function randRange(min, max) {
@@ -296,7 +509,10 @@ function loop(timestamp) {
   lastFrame = timestamp;
   const timeInfo = getTimeInfo(deltaSeconds);
   drawGradient(timeInfo.progress);
+  drawSunGlow(timeInfo.progress);
+  drawClouds(timeInfo.progress);
   const nightFactor = getNightFactor(timeInfo.progress);
+  drawPlanets(timeInfo.progress);
   drawStars(nightFactor);
   if (nightFactor > 0.2) {
     const spawnInterval = 6500 - nightFactor * 2500;
@@ -307,6 +523,7 @@ function loop(timestamp) {
   }
   updateMeteors(deltaSeconds);
   drawMeteors();
+  updateClouds(deltaSeconds);
   updateClock(timeInfo.label);
   requestAnimationFrame(loop);
 }
