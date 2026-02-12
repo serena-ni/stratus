@@ -24,6 +24,14 @@ const state = {
 let stars = [];
 let lastFrame = performance.now();
 let simTime = 0;
+let lastMeteorSpawn = performance.now();
+const meteors = [];
+
+const meteorTiers = [
+  { name: "common", chance: 0.7, speed: [800, 1100], size: [1.2, 1.8], life: [0.7, 1.1], glow: 0.4 },
+  { name: "rare", chance: 0.22, speed: [1100, 1500], size: [1.6, 2.4], life: [0.9, 1.4], glow: 0.55 },
+  { name: "legendary", chance: 0.08, speed: [1500, 1900], size: [2.2, 3.2], life: [1.2, 1.8], glow: 0.7 }
+];
 
 const skyKeyframes = [
   { t: 0, top: "#0a0f2b", bottom: "#050814" },
@@ -87,6 +95,7 @@ function getTimeInfo(deltaSeconds) {
   };
 }
 
+// blend colors
 function lerp(a, b, t) {
   return a + (b - a) * t;
 }
@@ -145,6 +154,79 @@ function drawStars(nightFactor) {
     ctx.fill();
   }
   ctx.globalAlpha = 1;
+}
+
+function randRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function chooseMeteorTier() {
+  const roll = Math.random();
+  let total = 0;
+  for (const tier of meteorTiers) {
+    total += tier.chance;
+    if (roll <= total) {
+      return tier;
+    }
+  }
+  return meteorTiers[0];
+}
+
+function spawnMeteor() {
+  const tier = chooseMeteorTier();
+  const startX = randRange(-0.1 * canvas.width, 0.8 * canvas.width);
+  const startY = randRange(-0.2 * canvas.height, 0.3 * canvas.height);
+  const angle = randRange(Math.PI * 0.1, Math.PI * 0.25);
+  const slowStreak = Math.random() < 0.22;
+  const speed = randRange(tier.speed[0], tier.speed[1]) * (slowStreak ? 0.55 : 1);
+  const life = randRange(tier.life[0], tier.life[1]) * (slowStreak ? 1.4 : 1);
+  meteors.push({
+    x: startX,
+    y: startY,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    life,
+    age: 0,
+    size: randRange(tier.size[0], tier.size[1]),
+    glow: tier.glow
+  });
+}
+
+function updateMeteors(deltaSeconds) {
+  for (let i = meteors.length - 1; i >= 0; i -= 1) {
+    const meteor = meteors[i];
+    meteor.age += deltaSeconds;
+    meteor.x += meteor.vx * deltaSeconds;
+    meteor.y += meteor.vy * deltaSeconds;
+    if (meteor.age > meteor.life) {
+      meteors.splice(i, 1);
+    }
+  }
+}
+
+function drawMeteors() {
+  for (const meteor of meteors) {
+    const lifeProgress = meteor.age / meteor.life;
+    const alpha = (1 - lifeProgress) * meteor.glow;
+    const tailLength = 180 * (1 - lifeProgress);
+    const tailX = meteor.x - meteor.vx * (tailLength / 1000);
+    const tailY = meteor.y - meteor.vy * (tailLength / 1000);
+
+    const grad = ctx.createLinearGradient(meteor.x, meteor.y, tailX, tailY);
+    grad.addColorStop(0, `rgba(255,255,255,${alpha})`);
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = meteor.size;
+    ctx.beginPath();
+    ctx.moveTo(meteor.x, meteor.y);
+    ctx.lineTo(tailX, tailY);
+    ctx.stroke();
+
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.beginPath();
+    ctx.arc(meteor.x, meteor.y, meteor.size * 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 function updateClock(label) {
@@ -214,7 +296,17 @@ function loop(timestamp) {
   lastFrame = timestamp;
   const timeInfo = getTimeInfo(deltaSeconds);
   drawGradient(timeInfo.progress);
-  drawStars(getNightFactor(timeInfo.progress));
+  const nightFactor = getNightFactor(timeInfo.progress);
+  drawStars(nightFactor);
+  if (nightFactor > 0.2) {
+    const spawnInterval = 6500 - nightFactor * 2500;
+    if (timestamp - lastMeteorSpawn > spawnInterval && Math.random() < 0.12) {
+      spawnMeteor();
+      lastMeteorSpawn = timestamp;
+    }
+  }
+  updateMeteors(deltaSeconds);
+  drawMeteors();
   updateClock(timeInfo.label);
   requestAnimationFrame(loop);
 }
