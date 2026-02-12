@@ -7,6 +7,46 @@
 </head>
 <body>
   <canvas id="sky"></canvas>
+  <div class="clock" id="clock" aria-live="polite">--:--</div>
+  <div class="ui" aria-label="Sky settings">
+    <button id="menu-toggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu">
+      Settings
+    </button>
+    <div id="menu" class="menu" role="dialog" aria-label="Sky settings">
+      <div class="menu-row">
+        <label for="time-mode">Time mode</label>
+        <div class="segmented" id="time-mode" role="group" aria-label="Time mode">
+          <button type="button" class="segment" data-mode="real" aria-pressed="true">Real time</button>
+          <button type="button" class="segment" data-mode="sim" aria-pressed="false">Simulated</button>
+        </div>
+      </div>
+      <div class="menu-row">
+        <label for="sim-speed">Sim speed (min/s)</label>
+        <div class="control">
+          <input id="sim-speed" type="range" min="1" max="240" value="30">
+          <span id="sim-speed-value" class="value">30</span>
+        </div>
+      </div>
+      <div class="menu-row">
+        <label for="star-density">Stars</label>
+        <div class="control">
+          <input id="star-density" type="range" min="60" max="800" value="300">
+          <span id="star-density-value" class="value">300</span>
+        </div>
+      </div>
+      <div class="menu-row">
+        <label for="twinkle-speed">Twinkle</label>
+        <div class="control">
+          <input id="twinkle-speed" type="range" min="0" max="100" value="35">
+          <span id="twinkle-speed-value" class="value">35</span>
+        </div>
+      </div>
+      <div class="menu-row toggle">
+        <label for="show-time">Show clock</label>
+        <input id="show-time" type="checkbox" checked>
+      </div>
+    </div>
+  </div>
   <script src="./main.js"></script>
 </body>
 </html>
